@@ -57,7 +57,7 @@ func (p Process) Spawn(path, URI string) *exec.Cmd {
 		"-reconnect_at_eof",
 		"1",
 		"-reconnect_streamed",
-		"1"
+		"1",
 		"-reconnect_delay_max",
 		"2",
 		"nobuffer",
