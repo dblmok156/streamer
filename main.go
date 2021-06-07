@@ -38,6 +38,7 @@ type Stream struct {
 	LoggingOpts *ProcessLoggingOpts  `json:"-"`
 	Logger      *lumberjack.Logger   `json:"-"`
 	WaitTimeOut time.Duration        `json:"-"`
+	TypeStream  string               `json:"-"`
 }
 
 // Type check
@@ -51,6 +52,7 @@ func NewStream(
 	audio bool,
 	loggingOpts ProcessLoggingOpts,
 	waitTimeOut time.Duration,
+	typeStream string,
 ) (*Stream, string) {
 	id := uuid.New().String()
 	path := fmt.Sprintf("%s/%s", storingDirectory, id)
@@ -59,7 +61,7 @@ func NewStream(
 		logrus.Error(err)
 		return nil, ""
 	}
-	process := NewProcess(keepFiles, audio)
+	process := NewProcess(keepFiles, audio, typeStream)
 	cmd := process.Spawn(path, URI)
 
 	// Create nil pointer in case logging is not enabled
@@ -94,6 +96,7 @@ func NewStream(
 		Logger:      cmdLogger,
 		Running:     false,
 		WaitTimeOut: waitTimeOut,
+		TypeStream:  typeStream,
 	}
 	logrus.Debugf("%s store path created | Stream", stream.StorePath)
 	return &stream, id
@@ -168,7 +171,7 @@ func (strm *Stream) Restart() *sync.WaitGroup {
 	}
 	strm.Mux.Lock()
 	//if strm.CMD != nil && strm.CMD.ProcessState != nil {
-		strm.CMD.Process.Kill()
+	strm.CMD.Process.Kill()
 	//}
 	strm.CMD = strm.Process.Spawn(strm.StorePath, strm.OriginalURI)
 	if strm.LoggingOpts.Enabled {

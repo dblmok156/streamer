@@ -23,8 +23,9 @@ type ProcessLoggingOpts struct {
 
 // Process is the main type for creating new processes
 type Process struct {
-	keepFiles bool
-	audio     bool
+	keepFiles  bool
+	audio      bool
+	typeStream string
 }
 
 // Type check
@@ -34,13 +35,14 @@ var _ IProcess = (*Process)(nil)
 func NewProcess(
 	keepFiles bool,
 	audio bool,
+	typeStream string,
 ) *Process {
-	return &Process{keepFiles, audio}
+	return &Process{keepFiles, audio, typeStream}
 }
 
 // getHLSFlags are for getting the flags based on the config context
 func (p Process) getHLSFlags() string {
-	if p.keepFiles {
+	if p.keepFiles || p.typeStream == "file" {
 		return "append_list"
 	}
 	return "delete_segments+append_list"
@@ -49,12 +51,21 @@ func (p Process) getHLSFlags() string {
 // Spawn creates a new FFMPEG cmd
 func (p Process) Spawn(path, URI string) *exec.Cmd {
 	os.MkdirAll(path, os.ModePerm)
+
 	processCommands := []string{
 		"-y",
-		"-fflags",
-		"nobuffer",
-		"-rtsp_transport",
-		"tcp",
+	}
+
+	if p.typeStream == "rtsp" {
+		processCommands = append(processCommands,
+			"-fflags",
+			"nobuffer",
+			"-rtsp_transport",
+			"tcp",
+		)
+	}
+
+	processCommands = append(processCommands,
 		"-i",
 		URI,
 		"-vsync",
@@ -64,7 +75,8 @@ func (p Process) Spawn(path, URI string) *exec.Cmd {
 		"copy",
 		"-movflags",
 		"frag_keyframe+empty_moov",
-	}
+	)
+
 	if p.audio {
 		processCommands = append(processCommands, "-an")
 	}
