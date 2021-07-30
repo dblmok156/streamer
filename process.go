@@ -45,7 +45,7 @@ func (p Process) getHLSFlags() string {
 	if p.keepFiles || p.typeStream == "file" {
 		return "append_list"
 	}
-	return "delete_segments+append_list+split_by_time"
+	return "delete_segments+append_list"
 }
 
 // Spawn creates a new FFMPEG cmd
